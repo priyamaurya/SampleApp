@@ -35,4 +35,34 @@ function pageCrawl() {
   }
 }
 
+function checkPage(pageUrl, callback) {
+    // Add page to our set
+    pagesVisited[pageUrl] = true;
+    pageCounter++;
+    console.log("Visiting page " + pageUrl);
+    saveInfoToFile("site_domain_links", pagesToVisit);
+
+    request(pageUrl, function(error, response, body) {
+        // Check status code (200 is HTTP OK)
+        if (!error && response.statusCode == 200) {
+            console.log("Status code: " + response.statusCode);
+            var $ = cheerio.load(body);
+            $('a').each(function() {
+               if(checkURLDomain($(this).attr('href')) && removeDuplicates(pagesToVisit, $(this).attr('href'))){
+                      pagesToVisit.push($(this).attr('href'));
+                }              
+            });
+
+            findExternalLink($); // finds all external links in page
+            saveImagesOfPage($); // function to get all images links of the page
+            callback(); // callback is  pageCrawl function
+
+        } else {
+            console.log("error returned " + error);
+            callback();
+            return;
+        }
+    });
+}
+
 
